@@ -138,6 +138,19 @@ Then open the UI to see the health of each component in each environment.
 Architecture decisions are recorded in [`docs/adr/`](docs/adr/README.md). The scope of each
 milestone is in [`docs/milestones/`](docs/milestones/).
 
+## Development
+
+Requires Node.js 24 and Docker. The repository is a pnpm monorepo
+(see [ADR 0009](docs/adr/0009-typescript-monorepo.md)).
+
+```bash
+corepack enable                                 # provides the pinned pnpm version
+pnpm install
+docker compose -f deploy/docker-compose.yml up -d   # PostgreSQL for local development
+pnpm dev                                        # server on :8080, UI on :5173
+pnpm check && pnpm typecheck && pnpm test       # what CI runs
+```
+
 ## Contributing
 
 The project is at a very early stage. Ideas, use cases and feedback are welcome in

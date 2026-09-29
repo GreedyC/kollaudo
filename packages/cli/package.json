@@ -1,0 +1,25 @@
+{
+  "name": "@kollaudo/cli",
+  "version": "0.0.0",
+  "description": "Send test results to Kollaudo from any CI or script",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "kollaudo": "./dist/main.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kollaudo/kollaudo.git",
+    "directory": "packages/cli"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit"
+  }
+}
