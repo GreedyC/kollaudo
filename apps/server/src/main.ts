@@ -28,7 +28,7 @@ await migrateDb(db);
 
 if (args.length === 0 || args[0] === "serve") {
   const port = Number(process.env.PORT ?? 8080);
-  serve({ fetch: createApp().fetch, port }, (info) => {
+  serve({ fetch: createApp({ db }).fetch, port }, (info) => {
     console.log(`Kollaudo listening on http://localhost:${info.port}`);
   });
 } else {
