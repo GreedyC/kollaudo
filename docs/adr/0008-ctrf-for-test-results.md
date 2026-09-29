@@ -1,4 +1,4 @@
-# 4. CTRF as the native format for test results
+# 8. CTRF as the native format for test results
 
 - Status: accepted
 - Date: 2026-09-29
@@ -25,6 +25,6 @@ JUnit XML is older and less rich, but almost every tool can produce it.
 ## Consequences
 
 - Most frameworks already work, through an existing CTRF reporter or through JUnit XML.
-- CTRF is pre-1.0 and maintained by a small team. Because of [0003](0003-own-internal-model.md), a spec
+- CTRF is pre-1.0 and maintained by a small team. Because of [0004](0004-own-internal-model.md), a spec
   change only affects the CTRF adapter.
 - The CTRF and JUnit adapters need tests against real reports from several frameworks.

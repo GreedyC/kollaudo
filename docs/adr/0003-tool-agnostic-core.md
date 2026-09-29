@@ -1,4 +1,4 @@
-# 2. Tool-agnostic core
+# 3. Tool-agnostic core
 
 - Status: accepted
 - Date: 2026-09-29
@@ -17,7 +17,7 @@ entry points:
 
 - the `kollaudo` CLI;
 - the HTTP API `/v1`;
-- CDEvents (see [0005](0005-cdevents-in-and-out.md)).
+- CDEvents (see [0009](0009-cdevents-in-and-out.md)).
 
 Tool-specific support ships as **recipes**: configuration, templates or small adapters that turn a
 tool's events into calls to those entry points (for example an Argo CD notification template, a Kargo

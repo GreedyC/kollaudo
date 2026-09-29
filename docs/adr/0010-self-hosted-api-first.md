@@ -1,4 +1,4 @@
-# 7. Self-hosted and API-first
+# 10. Self-hosted and API-first
 
 - Status: accepted
 - Date: 2026-09-29

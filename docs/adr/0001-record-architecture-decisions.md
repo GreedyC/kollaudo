@@ -11,8 +11,11 @@ its design was decided. Without a record, the same questions get asked, and sett
 ## Decision
 
 Architecture decisions are recorded as short Markdown files in `docs/adr/`, numbered in order, using
-the template in [`README.md`](README.md). An accepted ADR is never rewritten: a change of mind is a new
-ADR that supersedes it.
+the template in [`README.md`](README.md).
+
+Until v0.1 is released, ADRs are drafts: they can be edited freely as the design settles, and git
+history keeps track of the changes. From v0.1 on, an accepted ADR is never rewritten: a change of
+mind is a new ADR that supersedes it. Typos and broken links can always be fixed.
 
 ## Consequences
 

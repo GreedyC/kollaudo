@@ -1,22 +1,27 @@
 # Architecture Decision Records
 
 Each file records one decision: its context, the decision itself and its consequences.
-A decision is never edited once accepted. If it changes, a new ADR supersedes it.
+Until v0.1 is released, ADRs can still be edited. From then on, a decision is never edited once
+accepted: if it changes, a new ADR supersedes it (see [0001](0001-record-architecture-decisions.md)).
 
 | # | Decision | Status |
 |---|---|---|
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | accepted |
-| [0002](0002-tool-agnostic-core.md) | Tool-agnostic core | accepted |
-| [0003](0003-own-internal-model.md) | Own internal data model | accepted |
-| [0004](0004-ctrf-for-test-results.md) | CTRF as the native format for test results | accepted |
-| [0005](0005-cdevents-in-and-out.md) | CDEvents as an optional input and output | accepted |
+| | **Principles** | |
+| [0002](0002-judge-never-orchestrate.md) | Kollaudo judges, it never orchestrates | accepted |
+| [0003](0003-tool-agnostic-core.md) | Tool-agnostic core | accepted |
+| | **Model** | |
+| [0004](0004-own-internal-model.md) | Own internal data model | accepted |
+| [0005](0005-create-on-first-use.md) | Components, environments and versions are created on first use | accepted |
+| | **Ingest and formats** | |
 | [0006](0006-push-based-ingest.md) | Push-based ingest | accepted |
-| [0007](0007-self-hosted-api-first.md) | Self-hosted and API-first | accepted |
-| [0008](0008-postgresql.md) | PostgreSQL as the database | accepted |
-| [0009](0009-typescript-monorepo.md) | TypeScript monorepo | accepted |
-| [0010](0010-judge-never-orchestrate.md) | Kollaudo judges, it never orchestrates | accepted |
-| [0011](0011-server-stack.md) | Server stack: Node.js, Hono, Zod and Drizzle | accepted |
-| [0012](0012-create-on-first-use.md) | Components, environments and versions are created on first use | accepted |
+| [0007](0007-scoped-api-tokens.md) | API tokens have one project and one scope | accepted |
+| [0008](0008-ctrf-for-test-results.md) | CTRF as the native format for test results | accepted |
+| [0009](0009-cdevents-in-and-out.md) | CDEvents as an optional input and output | accepted |
+| | **Architecture and technology** | |
+| [0010](0010-self-hosted-api-first.md) | Self-hosted and API-first | accepted |
+| [0011](0011-typescript-monorepo.md) | TypeScript monorepo | accepted |
+| [0012](0012-server-stack.md) | Server stack: Node.js, Hono, Zod, Drizzle and PostgreSQL | accepted |
 
 ## Template
 

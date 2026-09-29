@@ -1,4 +1,4 @@
-# 10. Kollaudo judges, it never orchestrates
+# 2. Kollaudo judges, it never orchestrates
 
 - Status: accepted
 - Date: 2026-09-29

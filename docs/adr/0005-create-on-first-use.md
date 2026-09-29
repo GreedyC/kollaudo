@@ -1,4 +1,4 @@
-# 12. Components, environments and versions are created on first use
+# 5. Components, environments and versions are created on first use
 
 - Status: accepted
 - Date: 2026-09-29
@@ -7,13 +7,13 @@
 
 Versions appear continuously: every commit, pull request build and tag is a new one. Preview
 environments come and go with pull requests. Asking users to register each of them before sending
-data would make adoption heavy, which [0010](0010-judge-never-orchestrate.md) rules out.
+data would make adoption heavy, which [0002](0002-judge-never-orchestrate.md) rules out.
 
 ## Decision
 
-- A **project** is created explicitly, by an administrator, and comes with its API tokens
-  (see [0006](0006-push-based-ingest.md)). A token is scoped to one project, so senders never need
-  to name the project.
+- A **project** is created explicitly, by an administrator, together with its API tokens
+  (see [0007](0007-scoped-api-tokens.md)). Since every token belongs to one project, senders never
+  need to name the project.
 - **Components**, **environments** and **versions** are created automatically the first time data
   refers to them, matched by name within the project (and, for versions, within the component).
 - Metadata sent later for an existing version (`commit`, `branch`, `tag`, `pullRequest`) fills in

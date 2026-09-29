@@ -1,4 +1,4 @@
-# 3. Own internal data model
+# 4. Own internal data model
 
 - Status: accepted
 - Date: 2026-09-29

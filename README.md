@@ -111,17 +111,18 @@ Ready-made **recipes** turn popular tools' events into those calls.
 
 ```bash
 docker compose up
-docker compose exec kollaudo kollaudo-server project create demo   # prints an API token
+docker compose exec kollaudo kollaudo-server project create demo   # prints an ingest and a read token
 
 export KOLLAUDO_URL=http://localhost:8080
-export KOLLAUDO_TOKEN=<token>
+export KOLLAUDO_TOKEN=<ingest token>
 
 # e2e results from Playwright's CTRF reporter, run against staging
 npx @kollaudo/cli push ctrf-report.json \
   --component frontend --env staging --version 1.2.0
 ```
 
-Then open the UI to see the health of each component in each environment.
+Then open the UI, add the project with its read token, and see the health of each component in
+each environment.
 
 ## Roadmap
 
@@ -141,7 +142,7 @@ milestone is in [`docs/milestones/`](docs/milestones/).
 ## Development
 
 Requires Node.js 24 and Docker. The repository is a pnpm monorepo
-(see [ADR 0009](docs/adr/0009-typescript-monorepo.md)).
+(see [ADR 0011](docs/adr/0011-typescript-monorepo.md)).
 
 ```bash
 corepack enable                                 # provides the pinned pnpm version
