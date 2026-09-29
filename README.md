@@ -145,12 +145,20 @@ Requires Node.js 24 and Docker. The repository is a pnpm monorepo
 (see [ADR 0011](docs/adr/0011-typescript-monorepo.md)).
 
 ```bash
-corepack enable                                 # provides the pinned pnpm version
+corepack enable                                     # provides the pinned pnpm version
 pnpm install
 docker compose -f deploy/docker-compose.yml up -d   # PostgreSQL for local development
-pnpm dev                                        # server on :8080, UI on :5173
-pnpm check && pnpm typecheck && pnpm test       # what CI runs
+cp apps/server/.env.example apps/server/.env
+pnpm admin project create demo                      # prints an ingest and a read token
+pnpm dev                                            # server on :8080, UI on :5173
+pnpm check && pnpm typecheck && pnpm test           # what CI runs
 ```
+
+Tests that need a database create a temporary one on the local PostgreSQL, or on
+`TEST_DATABASE_URL`, and drop it when they finish.
+
+After changing `apps/server/src/db/schema.ts`, generate a migration with
+`pnpm --filter @kollaudo/server db:generate`.
 
 ## Contributing
 

@@ -4,15 +4,25 @@
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
+  "bin": {
+    "kollaudo-server": "./dist/main.js"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "node --conditions=development --watch src/main.ts",
+    "dev": "node --env-file-if-exists=.env --conditions=development --watch src/main.ts",
     "start": "node dist/main.js",
+    "admin": "node --env-file-if-exists=.env --conditions=development src/main.ts",
+    "db:generate": "drizzle-kit generate",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
     "@kollaudo/schema": "workspace:*",
-    "hono": "^4.13.9"
+    "drizzle-orm": "^0.45.3",
+    "hono": "^4.13.9",
+    "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.11"
   }
 }

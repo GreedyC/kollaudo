@@ -1,4 +1,5 @@
 # Local development database. The Kollaudo container is added in v0.1.
+name: kollaudo
 services:
   postgres:
     image: postgres:18-alpine

@@ -10,6 +10,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
+    "admin": "pnpm --filter @kollaudo/server admin",
     "check": "biome check .",
     "format": "biome check --write .",
     "typecheck": "pnpm -r typecheck",
