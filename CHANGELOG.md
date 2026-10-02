@@ -6,6 +6,10 @@ the API.
 
 ## [Unreleased]
 
+### Recipes
+
+- A pytest recipe for JUnit XML, build-level unit results, staging promotion gates and retry-reporting limitations.
+
 ### Server
 
 - A log of the verdicts given ([ADR 0019](docs/adr/0019-when-the-gate-is-skipped-or-kollaudo-is-down.md)):
