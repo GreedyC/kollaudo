@@ -19,11 +19,11 @@ logger. If your CI already shows test results, as GitLab and Azure DevOps do, yo
 these files. Point `kollaudo push` at them, and it converts them
 ([ADR 0015](adr/0015-junit-converted-by-the-cli.md)):
 
-```bash
-kollaudo push "target/surefire-reports/*.xml" --tool maven …   # Maven
-kollaudo push "build/test-results/test/*.xml" --tool gradle …   # Gradle
-kollaudo push junit.xml --tool pytest …                         # pytest --junitxml=junit.xml
-```
+| Tool | Where it writes JUnit XML | Send it |
+|---|---|---|
+| Maven | `target/surefire-reports/` | `kollaudo push "target/surefire-reports/*.xml" --tool maven …` |
+| Gradle | `build/test-results/test/` | `kollaudo push "build/test-results/test/*.xml" --tool gradle …` |
+| pytest | the file given with `pytest --junitxml=junit.xml` | `kollaudo push junit.xml --tool pytest …` |
 
 Retries are understood too: Maven Surefire's reruns and Gradle's test-retry plugin show up as flaky
 tests. `--tool` names the tool in Kollaudo, since JUnit files don't say which tool wrote them.
@@ -49,11 +49,11 @@ sent together.
 ## 2. Send it with `kollaudo push`
 
 The CLI needs Node.js 24. Run it with `npx @kollaudo/cli`, or install it with
-`npm install -g @kollaudo/cli`.
+`npm install -g @kollaudo/cli`. Keep the token in a secret of your CI.
 
 ```bash
 export KOLLAUDO_URL=https://kollaudo.example.com
-export KOLLAUDO_TOKEN=<an ingest token of your project>   # a secret of your CI
+export KOLLAUDO_TOKEN=<an ingest token of your project>
 
 kollaudo push ctrf-report.json \
   --component frontend --env staging --version "$VERSION" --kind e2e \
@@ -178,16 +178,24 @@ kollaudo verdict list --component frontend --env staging
 It needs a `read` token, and `GET /v1/verdicts` gives the same list. The log records the answers:
 later verdicts are still computed from the evidence.
 
-> The log of verdicts comes with the next release.
+To look at a verdict without being a gate, as the web UI does, ask with `record=false`: the answer is
+the same, but it isn't recorded, so it doesn't count as the `pass` that lets a deployment through
+the gate.
+
+Deployments to an environment whose policy says where versions come from are checked against this
+log: those without a `pass` before them are [ungated](policies.md#deployments-that-skip-the-gate).
+
+> The log of verdicts and ungated deployments come with the next release.
 
 ## Recipes
 
-Complete examples for one framework and one CI. They are tested in Kollaudo's own CI.
+Complete examples for one framework and one CI. The table shows which recipes are tested in Kollaudo's own CI.
 
 | Recipe | |
 |---|---|
 | [Playwright with GitHub Actions](recipes/playwright.md) | tested by [`e2e/`](../e2e/) |
-| [pytest with GitHub Actions](recipes/pytest.md) | JUnit XML, build-level unit results and a staging gate |
+| [pytest with GitHub Actions](recipes/pytest.md): JUnit XML, unit results at build level, a staging gate | not tested in CI yet |
+| [GitLab CI](recipes/gitlab-ci.md): test against staging, gate a deployment to production | not tested in CI yet |
 | [Argo CD notifications](recipes/argocd.md): deployments after each sync | tested in kind by [`e2e/kind/recipe-argocd.sh`](../e2e/kind/recipe-argocd.sh) |
 | [Kargo](recipes/kargo.md): a promotion goes on only on `pass` | tested in kind by [`e2e/kind/recipe-kargo.sh`](../e2e/kind/recipe-kargo.sh) |
 

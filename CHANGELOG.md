@@ -8,18 +8,50 @@ the API.
 
 ### Recipes
 
-- A pytest recipe for JUnit XML, build-level unit results, staging promotion gates and retry-reporting limitations.
+- [pytest](docs/recipes/pytest.md): JUnit XML, build-level unit results, staging promotion gates and retry-reporting limitations.
+- [GitLab CI](docs/recipes/gitlab-ci.md): run tests against staging, send results even on failure, and gate promotion to production on the verdict.
 
 ### Server
 
+- `GET /v1/verdict?…&record=false` asks without being a gate, as the web UI does: the verdict isn't
+  recorded, and doesn't count for gated deployments.
 - A log of the verdicts given ([ADR 0019](docs/adr/0019-when-the-gate-is-skipped-or-kollaudo-is-down.md)):
   every answer of `GET /v1/verdict` is recorded with its outcome, the outcome of the evidence alone,
   the policy revision and required kinds, the override that let the version through, and the token
   that asked. `GET /v1/verdicts` lists them, newest first, with filters and pages.
+- Ungated deployments ([ADR 0019](docs/adr/0019-when-the-gate-is-skipped-or-kollaudo-is-down.md),
+  [docs](docs/policies.md#deployments-that-skip-the-gate)): when the policy says where the versions
+  of an environment come from (`from`), each deployment there says whether Kollaudo gave a `pass`
+  for that version where it comes from before it was deployed. Deployments carry it in `gate`, in
+  `GET /v1/deployments`, `/v1/health` and the verdict.
+
+- `GET /readyz` says whether an instance can answer requests: `200` when its database answers, `503`
+  when it doesn't. `/healthz` still only says that the process is up.
+
+### Helm chart
+
+- The readiness probe uses `/readyz`, so pods whose database doesn't answer get no traffic. Liveness
+  still uses `/healthz`, so a database outage doesn't restart them.
+
+### Web UI
+
+- The verdict in the UI: each cell of the health matrix shows the verdict a gate would get for the
+  version deployed there, or for the newest one tested there. It links to a page with its reasons
+  for each kind of test, the rules of the policy, the override that let it through, and the gates
+  that asked for it.
+- The health matrix marks deployed versions that went around the gate as `ungated`.
+- The health matrix places environments named `qua` or `quality` before production.
+
+### Documentation
+
+- Shell commands in the docs have no comments on them: zsh, the default shell of macOS, would pass
+  the comments to the commands as arguments. The quick start is a numbered list instead.
 
 ### CLI
 
 - `kollaudo verdict list` shows the verdicts given, with who asked and the policy revision.
+- `kollaudo deployed` says when a deployment is ungated, and `kollaudo verdict` notes it for the
+  version running in the environment.
 
 ## [0.2.0] - 2026-10-02
 

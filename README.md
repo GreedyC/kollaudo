@@ -40,23 +40,31 @@ Kollaudo doesn't build, test or deploy anything: there are plenty of great tools
 
 The commands use the latest release, 0.2.0, so they keep working while `main` changes.
 
-```bash
-export KOLLAUDO_VERSION=0.2.0
-curl -O https://raw.githubusercontent.com/kollaudo/kollaudo/v$KOLLAUDO_VERSION/deploy/docker-compose.yml
-docker compose up -d
-docker compose exec kollaudo kollaudo-server project create demo   # prints an ingest and a read token
+1. Start Kollaudo, and create a project. It prints an ingest and a read token:
 
-export KOLLAUDO_URL=http://localhost:8080
-export KOLLAUDO_TOKEN=<ingest token>
+   ```bash
+   export KOLLAUDO_VERSION=0.2.0
+   curl -O https://raw.githubusercontent.com/kollaudo/kollaudo/v$KOLLAUDO_VERSION/deploy/docker-compose.yml
+   docker compose up -d
+   docker compose exec kollaudo kollaudo-server project create demo
+   ```
 
-# an example report of e2e tests run against staging, as Playwright's CTRF reporter writes it
-curl -O https://raw.githubusercontent.com/kollaudo/kollaudo/v$KOLLAUDO_VERSION/docs/examples/ctrf-report.json
-npx --yes @kollaudo/cli@$KOLLAUDO_VERSION push ctrf-report.json \
-  --component frontend --env staging --version 1.2.0
+2. Send an example report of e2e tests run against staging, as Playwright's CTRF reporter writes it:
 
-# can 1.2.0 leave staging? No: a test failed, so the verdict is FAIL and the exit code 1
-npx --yes @kollaudo/cli@$KOLLAUDO_VERSION verdict --component frontend --env staging --version 1.2.0
-```
+   ```bash
+   export KOLLAUDO_URL=http://localhost:8080
+   export KOLLAUDO_TOKEN=<ingest token>
+   curl -O https://raw.githubusercontent.com/kollaudo/kollaudo/v$KOLLAUDO_VERSION/docs/examples/ctrf-report.json
+   npx --yes @kollaudo/cli@$KOLLAUDO_VERSION push ctrf-report.json \
+     --component frontend --env staging --version 1.2.0
+   ```
+
+3. Ask whether 1.2.0 can leave staging. It can't: a test failed, so the verdict is FAIL, and the
+   exit code 1.
+
+   ```bash
+   npx --yes @kollaudo/cli@$KOLLAUDO_VERSION verdict --component frontend --env staging --version 1.2.0
+   ```
 
 Then open http://localhost:8080, add the project with its **read** token, and see the health of
 each component in each environment. To send your own results, see
@@ -122,7 +130,8 @@ If one CI system does all of this for you and its gates are enough, you probably
 - **Trusts evidence it can trace**: tokens with names, limited to components and environments, and
   every result recording which token sent it.
 - **Shows the health of each project**: the version deployed and the latest tested version of every
-  component in every environment, and the tests of each run.
+  component in every environment, and the tests of each run. With the next release, the verdict of
+  each cell too, and why.
 - **Runs anywhere** as one container next to PostgreSQL, with Docker Compose or the
   [Helm chart](charts/kollaudo/README.md), with several projects and scoped tokens.
 
@@ -238,8 +247,10 @@ as a gate.
 
 ```bash
 kollaudo verdict --component api --env staging --version 1.4.2
-# exit code 0 = pass, 1 = fail, 2 = unknown, 3 = no verdict (network, token, usage error)
 ```
+
+It exits with `0` for pass, `1` for fail, `2` for unknown, and `3` when there is no verdict (network,
+token or usage error).
 
 [Sending test results](docs/sending-results.md) explains the three steps for any test framework
 and any CI: write a CTRF report, `kollaudo push` it, gate on `kollaudo verdict`.
@@ -250,12 +261,13 @@ Ready-made **recipes** are complete examples for popular tools.
 |---|---|
 | [Playwright with GitHub Actions](docs/recipes/playwright.md) | available |
 | [pytest with GitHub Actions](docs/recipes/pytest.md) | available |
+| [GitLab CI](docs/recipes/gitlab-ci.md) | available |
 | [Argo CD notifications](docs/recipes/argocd.md) | available |
 | [Kargo promotion gate](docs/recipes/kargo.md) | available |
 | Azure DevOps | planned, after 0.2.0 |
 | GitHub Action | planned |
 | Backstage plugin | planned |
-| Flux, GitLab, Argo Rollouts, Flagger, Spinnaker… | contributions welcome |
+| Flux, Argo Rollouts, Flagger, Spinnaker… | contributions welcome |
 
 ## Roadmap
 
@@ -288,13 +300,20 @@ Requires Node.js 24 and Docker. The repository is a pnpm monorepo
 (see [ADR 0011](docs/adr/0011-typescript-monorepo.md)).
 
 ```bash
-corepack enable                                     # provides the pinned pnpm version
+corepack enable
 pnpm install
-docker compose up -d                                # PostgreSQL for local development
+docker compose up -d
 cp apps/server/.env.example apps/server/.env
-pnpm admin project create demo                      # prints an ingest and a read token
-pnpm dev                                            # API on :8080, UI with hot reload on :5173
-pnpm check && pnpm typecheck && pnpm test           # what CI runs
+pnpm admin project create demo
+pnpm dev
+```
+
+`corepack enable` provides the pinned pnpm version, `docker compose up -d` starts PostgreSQL for
+local development, `pnpm admin project create demo` prints an ingest and a read token, and `pnpm dev`
+serves the API on :8080 and the UI, with hot reload, on :5173. CI runs:
+
+```bash
+pnpm check && pnpm typecheck && pnpm test
 ```
 
 The end-to-end test runs Kollaudo in its container and uses it as a team would, with the CLI and
@@ -324,6 +343,14 @@ The project is at a very early stage. Ideas, use cases and feedback are welcome 
 [contributing guide](CONTRIBUTING.md) before opening a
 pull request, and the [security policy](https://github.com/kollaudo/.github/blob/main/SECURITY.md) to
 report a vulnerability.
+
+### Contributors
+
+Thanks to everyone who has made Kollaudo better!
+
+<a href="https://github.com/kollaudo/kollaudo/graphs/contributors">
+  <img src="https://raw.githubusercontent.com/kollaudo/kollaudo/contributors/contributors.svg" alt="The people who have contributed to Kollaudo">
+</a>
 
 ## License
 

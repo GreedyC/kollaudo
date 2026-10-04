@@ -18,6 +18,7 @@ import {
   PolicyDocument,
   PolicyInput,
   Project,
+  Readyz,
   TestRunCreated,
   TestRunDetail,
   TestRunInput,
@@ -26,7 +27,7 @@ import {
   Verdict,
   VerdictQuery,
 } from "@kollaudo/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { bodyLimit } from "hono/body-limit";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
@@ -96,6 +97,27 @@ export function createApp({ db, webDir }: AppOptions) {
       responses: { 200: json(Healthz, "The server is up") },
     }),
     (c) => c.json({ status: "ok" as const, version: VERSION }, 200),
+  );
+
+  app.openapi(
+    createRoute({
+      method: "get",
+      path: "/readyz",
+      summary: "Readiness check",
+      description:
+        "Whether this instance can answer requests: 200 when the database answers, 503 when it " +
+        "doesn't. Load balancers and Kubernetes send traffic only to ready instances.",
+      responses: {
+        200: json(Readyz, "The server and its database answer"),
+        503: json(Readyz, "The database doesn't answer"),
+      },
+    }),
+    async (c) => {
+      const ready = await databaseAnswers(db);
+      return ready
+        ? c.json({ status: "ready" as const, database: "ok" as const }, 200)
+        : c.json({ status: "not_ready" as const, database: "unreachable" as const }, 503);
+    },
   );
 
   app.openapi(
@@ -358,15 +380,17 @@ export function createApp({ db, webDir }: AppOptions) {
         "`pass`, `fail` or `unknown`, with the reasons for each kind of test. A version, component " +
         "or environment Kollaudo has never seen is `unknown`: evidence is missing. Accepts `read` " +
         "and `ingest` tokens, so a CI gate can use the token it sends results with. Every verdict " +
-        "given is recorded, with the token that asked: see `GET /v1/verdicts`.",
+        "given is recorded, with the token that asked: see `GET /v1/verdicts`. With `record=false` " +
+        "it is not, as for the web UI.",
       security: [{ token: [] }],
       middleware: [requireScope(db, "read", "ingest")] as const,
       request: { query: VerdictQuery },
       responses: { 200: json(Verdict, "The verdict"), ...errors },
     }),
     async (c) => {
-      const verdict = await getVerdict(db, c.var.projectId, c.req.valid("query"));
-      await recordVerdict(db, c.var.token, verdict);
+      const query = c.req.valid("query");
+      const verdict = await getVerdict(db, c.var.projectId, query);
+      if (query.record) await recordVerdict(db, c.var.token, verdict);
       return c.json(verdict, 200);
     },
   );
@@ -429,4 +453,22 @@ function serveWeb(app: OpenAPIHono<AuthEnv>, root: string) {
     c.header("Cache-Control", "no-cache");
     return index(c, next);
   });
+}
+
+/** How long the readiness check waits for the database: probes have short timeouts too. */
+const READY_TIMEOUT_MS = 2_000;
+
+/** Whether the database answers a trivial query in time. */
+async function databaseAnswers(db: Db) {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<false>((resolve) => {
+    timer = setTimeout(() => resolve(false), READY_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([db.execute(sql`select 1`).then(() => true), timeout]);
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
 }

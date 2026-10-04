@@ -44,7 +44,7 @@ components:
 | `deployed` | a run counts only if, when it started, the latest deployment of the component in the environment was the tested version | `false` |
 | `flaky` | `fail`: a flaky test fails its run. `allow`: flaky tests that passed in the end don't | `allow` |
 | `maxAge` | runs received longer ago don't count, such as `30m`, `12h`, `7d` | none |
-| `from` | the environment versions come from before this one. Kollaudo doesn't use it yet | none |
+| `from` | the environment versions come from before this one, such as `staging` for `production`. Deployments without a pass there before them are marked [ungated](#deployments-that-skip-the-gate) | none |
 
 **Which rules apply** to a component in an environment: the entry for that component and
 environment, else the entry for the environment, by exact name before patterns, else `default`. A
@@ -61,13 +61,20 @@ says why. "Started" is the start time in the report, else the time Kollaudo rece
 Policies are sent with a token of the `policy` scope, which CI jobs that send results don't hold:
 they can't change the rules their results are judged by.
 
-```bash
-kollaudo-server token create shop --scope policy --name rules   # once, on the server
+Create the token once, on the server:
 
+```bash
+kollaudo-server token create shop --scope policy --name rules
+```
+
+Then check the file, which validates it and keeps nothing; push it, so that a new revision applies
+from now on; and show the current revision, as it was sent:
+
+```bash
 export KOLLAUDO_TOKEN=<policy token>
-kollaudo policy check kollaudo.yaml   # validate it, keep nothing
-kollaudo policy push kollaudo.yaml    # a new revision applies from now on
-kollaudo policy show                  # the current revision, as it was sent
+kollaudo policy check kollaudo.yaml
+kollaudo policy push kollaudo.yaml
+kollaudo policy show
 ```
 
 A good place for `policy push` is a CI job that runs when `kollaudo.yaml` changes on the main branch,
@@ -95,3 +102,34 @@ before it too.
 
 When a version has to go through without its evidence, use an [override](overrides.md), not a
 looser policy.
+
+## Deployments that skip the gate
+
+Kollaudo can't stop a deployment that never asks for a verdict, but it can show it
+([ADR 0019](adr/0019-when-the-gate-is-skipped-or-kollaudo-is-down.md)). Say where the versions of an
+environment come from:
+
+```yaml
+environments:
+  production:
+    from: staging
+```
+
+Then every deployment to `production` is checked against the [log of
+verdicts](sending-results.md#every-verdict-is-recorded): it is **gated** when Kollaudo gave a `pass`
+for the same component and version in `staging` before it was deployed, and **ungated** otherwise,
+when no gate asked, or when the answer wasn't `pass`.
+
+```console
+$ kollaudo deployed --component api --env production --version 3f2a9c1
+Recorded api 3f2a9c1 running in production since 2026-10-02T09:30:00.000Z
+Ungated: Kollaudo gave no pass for 3f2a9c1 in staging before it was deployed.
+```
+
+The deployment is recorded all the same: Kollaudo records what happened. It shows in `gate` of each
+deployment in the API, with the pass it relied on; as `ungated` next to the deployed version in the
+health matrix; and in a note of the verdict for that environment.
+
+Each deployment is checked against the policy in force when it was deployed: adding `from` doesn't
+mark older deployments. An override in `staging` counts as a pass, since the verdict was `pass`, and
+the override says who let it through.
