@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import type { TestRunCreated, TestRunInput } from "@kollaudo/schema";
+import type { CtrfReport, TestRunCreated, TestRunInput, TestRunSummary } from "@kollaudo/schema";
 import { call, describeError, server } from "./api.ts";
 import type { Io } from "./io.ts";
 import { JunitError } from "./junit.ts";
@@ -24,11 +24,13 @@ Options:
   --digest <digest>      Digest of the built artifact, such as a container image digest
   --tool <name>          Tool that ran the tests, such as "pytest". JUnit reports don't say it
                          (default: junit)
+  --dry-run              Read the reports and print what would be sent, without sending it.
+                         KOLLAUDO_URL and KOLLAUDO_TOKEN aren't needed
   -h, --help             Show this help
 
 Environment:
-  KOLLAUDO_URL    URL of your Kollaudo server (required)
-  KOLLAUDO_TOKEN  An ingest token of your project (required)
+  KOLLAUDO_URL    URL of your Kollaudo server (required, except with --dry-run)
+  KOLLAUDO_TOKEN  An ingest token of your project (required, except with --dry-run)
 
 Examples:
   kollaudo push ctrf-report.json --component frontend --env staging --version 1.2.0
@@ -67,7 +69,8 @@ export async function push(args: string[], io: Io): Promise<number> {
     return 1;
   }
 
-  const target = server(io, "an ingest token");
+  // A dry run reads the reports but never calls the server, so it needs no URL or token.
+  const target = values["dry-run"] ? undefined : server(io, "an ingest token");
   if (typeof target === "string") return fail(target);
 
   let loaded: Loaded;
@@ -79,6 +82,25 @@ export async function push(args: string[], io: Io): Promise<number> {
   }
   // Errors in the report point to the file, when there is one file as it was sent.
   const file = loaded.format === "CTRF" && loaded.files.length === 1 ? loaded.files[0] : undefined;
+
+  if (target === undefined) {
+    let counts: TestRunSummary;
+    try {
+      counts = count(loaded.report, file);
+    } catch (error) {
+      if (error instanceof ReportError) return fail(error.message);
+      throw error;
+    }
+    const run = {
+      component: values.component as string,
+      version: values.version as string,
+      environment: values.env ?? null,
+      kind: values.kind ?? "e2e",
+      summary: counts,
+    };
+    io.out(`${summary(run, loaded, "Would send")}\nNothing was sent (--dry-run).\n`);
+    return 0;
+  }
 
   const body = {
     component: values.component as string,
@@ -111,7 +133,57 @@ export async function push(args: string[], io: Io): Promise<number> {
   return 0;
 }
 
-function summary(run: TestRunCreated, { format, files }: Loaded) {
+const STATUSES = ["passed", "failed", "skipped", "pending", "other"] as const;
+
+/**
+ * Counts the tests of a report for a dry run, as `summarize` in apps/server/src/ingest.ts does when
+ * it stores a run: keep the two in step. The published CLI has neither @kollaudo/schema nor zod, so
+ * the fields `CtrfTest` requires (packages/schema/src/ctrf.ts) are checked here by hand.
+ */
+function count(report: unknown, file: string | undefined): TestRunSummary {
+  const where = file ? `${file}: ` : "";
+  // mergeCtrf checks this for several CTRF files, but one file comes as it was written.
+  const tests = (report as CtrfReport | undefined)?.results?.tests;
+  if (!Array.isArray(tests)) {
+    throw new ReportError(`${file ?? "The report"} isn't a CTRF report: it has no results.tests.`);
+  }
+  const counts = {
+    tests: tests.length,
+    passed: 0,
+    failed: 0,
+    skipped: 0,
+    pending: 0,
+    other: 0,
+    flaky: 0,
+  };
+  tests.forEach((test, index) => {
+    const at = `${where}results.tests.${index}`;
+    if (typeof test?.name !== "string" || test.name === "") {
+      throw invalid(`${at}.name`, test?.name, "a non-empty string");
+    }
+    const status = test.status;
+    // Only the five statuses are counted, so a status such as "__proto__" never indexes `counts`.
+    if (!STATUSES.includes(status)) {
+      throw invalid(`${at}.status`, status, "passed, failed, skipped, pending or other");
+    }
+    if (typeof test.duration !== "number" || test.duration < 0) {
+      throw invalid(`${at}.duration`, test.duration, "a number of 0 or more");
+    }
+    if (test.flaky !== undefined && typeof test.flaky !== "boolean") {
+      throw invalid(`${at}.flaky`, test.flaky, "true or false");
+    }
+    counts[status]++;
+    if (test.flaky) counts.flaky++;
+  });
+  return counts;
+}
+
+function invalid(path: string, value: unknown, expected: string) {
+  const found = value === undefined ? "missing" : JSON.stringify(value);
+  return new ReportError(`${path} is ${found}, not ${expected}.`);
+}
+
+function summary(run: Omit<TestRunCreated, "id">, { format, files }: Loaded, verb = "Sent") {
   const { tests, passed, failed, skipped, pending, other, flaky } = run.summary;
   const counts = Object.entries({ passed, failed, skipped, pending, other, flaky })
     .filter(([name, count]) => count > 0 || name === "passed" || name === "failed")
@@ -122,7 +194,7 @@ function summary(run: TestRunCreated, { format, files }: Loaded) {
       ? ` from ${files.length} ${format} ${files.length === 1 ? "file" : "files"}`
       : "";
   return (
-    `Sent ${tests} ${tests === 1 ? "test" : "tests"} (${run.kind})${from} for ${run.component} ` +
+    `${verb} ${tests} ${tests === 1 ? "test" : "tests"} (${run.kind})${from} for ${run.component} ` +
     `${run.version}${where}: ${counts.join(", ")}`
   );
 }
@@ -142,6 +214,7 @@ function parse(args: string[]) {
       "pull-request": { type: "string" },
       digest: { type: "string" },
       tool: { type: "string" },
+      "dry-run": { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });

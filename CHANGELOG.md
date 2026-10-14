@@ -26,6 +26,12 @@ the API.
   a 0.5 server ([docs](docs/signoffs.md)). It exits with 0 once the sign-off is recorded, whatever
   the verdict, and doesn't add that verdict to the log.
 
+### CLI
+
+- `kollaudo push --dry-run` reads the reports and prints the summary it would send, with the number
+  of tests, failures and flaky tests, without calling Kollaudo. It needs no `KOLLAUDO_URL` or
+  `KOLLAUDO_TOKEN`, so a pipeline can be checked before it has a token.
+
 ## [0.4.0] - 2026-10-08
 
 The `kollaudo/action` gate and `push` actions run this release of the CLI. `kollaudo verdict --json`
