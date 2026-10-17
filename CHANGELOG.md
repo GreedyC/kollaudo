@@ -37,9 +37,6 @@ the API.
 
 ### CLI
 
-- `kollaudo override list --json` prints the API's full response for scripts, with
-  the same exit codes as the default one-line output.
-
 - `kollaudo signoff` records that you checked a version, such as a UAT or a manual check, with an
   outcome and a note, and prints the verdict that follows. It needs a token of the `signoff` scope and
   a 0.5 server ([docs](docs/signoffs.md)). It exits with 0 once the sign-off is recorded, whatever
@@ -51,6 +48,8 @@ the API.
   non-negative `results.summary.tests`, before a real push can be refused by the server.
 - `kollaudo verdict list --json` prints the API's answer as JSON, `next` included, for scripts that
   page through the log. The exit codes are the same as without it.
+- `kollaudo override list --json` prints the API's full response for scripts, with
+  the same exit codes as the default one-line output.
 
 ## [0.4.0] - 2026-10-08
 
