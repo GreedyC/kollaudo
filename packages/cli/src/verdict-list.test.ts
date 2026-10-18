@@ -107,6 +107,49 @@ describe("kollaudo verdict list", () => {
     });
   });
 
+  it("uses next to request a second page, keeping the filters and limit", async () => {
+    const cursor = given.id;
+    const older = { ...given, id: "0d0d0d0d-8a1b-4c3d-9e0f-123456789abc", version: "1.0.0" };
+    const requests: string[] = [];
+    const fetch = async (url: string | URL | Request) => {
+      requests.push(String(url));
+      const page =
+        requests.length === 1 ? { items: [given], next: cursor } : { items: [older], next: null };
+      return new Response(JSON.stringify(page), { status: 200 });
+    };
+    const args = ["verdict", "list", "--component", "api", "--limit", "1", "--json"];
+    const first = await runWith(run, args, { env, fetch: fetch as typeof globalThis.fetch });
+    expect(first.code).toBe(0);
+    const next = JSON.parse(first.out).next;
+    const second = await runWith(run, [...args, "--before", next], {
+      env,
+      fetch: fetch as typeof globalThis.fetch,
+    });
+    expect(second).toEqual({
+      code: 0,
+      out: `${JSON.stringify({ items: [older], next: null })}\n`,
+      err: "",
+    });
+    expect(requests).toEqual([
+      "https://kollaudo.example.com/v1/verdicts?component=api&limit=1",
+      `https://kollaudo.example.com/v1/verdicts?component=api&limit=1&before=${cursor}`,
+    ]);
+  });
+
+  it("preserves the server's invalid-cursor message and exits with 1", async () => {
+    const { requests, fetch } = server(400, {
+      error: { code: "invalid_request", message: "before must be a valid UUID." },
+    });
+    const result = await runWith(run, ["verdict", "list", "--before", "invalid", "--json"], {
+      env,
+      fetch,
+    });
+    expect(result.code).toBe(1);
+    expect(result.out).toBe("");
+    expect(result.err).toContain("before must be a valid UUID.");
+    expect(requests).toEqual(["https://kollaudo.example.com/v1/verdicts?before=invalid"]);
+  });
+
   it("keeps the exit code when --json can't have the list", async () => {
     const { fetch } = server(403, {
       error: { code: "forbidden", message: "This endpoint needs a token with the read scope." },

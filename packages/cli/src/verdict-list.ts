@@ -15,7 +15,8 @@ Options:
   --version <version>    Only this version
   --outcome <outcome>    Only pass, fail or unknown
   --limit <n>            How many, at most 200 (default: 50)
-  --json                 Print the API's answer as JSON instead of the one-line format
+  --before <id>          Continue from the previous JSON answer's next value
+  --json                 Print the API's answer as JSON, including next for --before
   -h, --help             Show this help
 
 Environment:
@@ -53,6 +54,7 @@ export async function verdictList(args: string[], io: Io): Promise<number> {
   if (values.version) query.set("version", values.version);
   if (values.outcome) query.set("outcome", values.outcome);
   if (values.limit) query.set("limit", values.limit);
+  if (values.before) query.set("before", values.before);
 
   const target = server(io, "a read token");
   if (typeof target === "string") return fail(target);
@@ -103,6 +105,7 @@ function parse(args: string[]) {
       version: { type: "string" },
       outcome: { type: "string" },
       limit: { type: "string" },
+      before: { type: "string" },
       json: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
