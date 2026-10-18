@@ -48,6 +48,8 @@ the API.
   non-negative `results.summary.tests`, before a real push can be refused by the server.
 - `kollaudo verdict list --json` prints the API's answer as JSON, `next` included, for scripts that
   page through the log. The exit codes are the same as without it.
+- `kollaudo verdict list --before <id>` continues from the previous JSON answer's `next` value,
+  with the same filters and limit, so scripts can read older verdicts too.
 
 ## [0.4.0] - 2026-10-08
 
